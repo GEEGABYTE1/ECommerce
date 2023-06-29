@@ -1,7 +1,7 @@
 const express = require('express')
 const bodyParser = require('body-parser')
 const app = express()
-
+const bcrypt = require('bcrypt')
 const db = require('./queries')
 
 
@@ -18,6 +18,9 @@ app.use(
 )
 
 // get requests 
+app.get('/', (req, res) => {
+    res.render('index.ejs')
+})
 app.get('/stores', db.getStores)
 
 
