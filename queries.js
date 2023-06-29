@@ -7,6 +7,8 @@ const pool = new Pool({
     port: 5000, // port
   })
 
+const bcrypt = require('bcrypt')
+
 const getStores = (req, res) => {
     pool.query('SELECT * FROM stores', (error, results) => {
         if (error) {
@@ -38,8 +40,37 @@ const updateStore = (request, response) => {
 
 }
 
+var prev_user_id = 12
+
+const SignUp = async (request, response) => {
+    try {
+        const hashedPassword = await bcrypt.hash(request.body.password, 10)
+        const email = request.body.email
+        const user_id = prev_user_id
+        
+        pool.query("INSERT INTO customer (id, customer_email, customer_password, items_owned, purchase_date, store_ids) VALUES ($1, $2, $3, ARRAY [0], ARRAY [' '], ARRAY [0])", [user_id, email, hashedPassword], (error, results) => {
+            if (error) {
+                throw error
+            }
+            prev_user_id += 1
+            //return response.status(200).json(results.rows)
+            
+            
+        })
+
+        return response.redirect('/login')
+        
+    } catch (err) {
+        
+        console.log(err)
+    }
+    
+    
+
+}
 
 module.exports = {
     getStores,
-    updateStore
+    updateStore,
+    SignUp
 }
