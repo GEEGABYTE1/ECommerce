@@ -97,6 +97,10 @@ app.get('/success', checkAuthenticated, (req, res) => {
     res.render('success.ejs')
 })
 
+app.get('/search/item/:id', db.searchItemById)
+app.get('/search/item/name/:name', db.searchItemByName)
+app.get('/search/store/id/:id', db.searchStoreById)
+
 
 // Passport and Auth related requests
 app.post('/login', checkNotAuthenticated, passport.authenticate('local', {
