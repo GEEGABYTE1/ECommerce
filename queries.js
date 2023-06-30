@@ -1,4 +1,13 @@
 const Pool = require('pg').Pool
+const bcrypt = require('bcrypt')
+
+
+
+
+
+
+
+
 const pool = new Pool({
     user: 'jaivalpatel', // username
     host: 'localhost',
@@ -7,7 +16,9 @@ const pool = new Pool({
     port: 5000, // port
   })
 
-const bcrypt = require('bcrypt')
+
+
+
 
 const getStores = (req, res) => {
     pool.query('SELECT * FROM stores', (error, results) => {
@@ -40,11 +51,11 @@ const updateStore = (request, response) => {
 
 }
 
-var prev_user_id = 12
+var prev_user_id = 14
 
 const SignUp = async (request, response) => {
     try {
-        const hashedPassword = await bcrypt.hash(request.body.password, 10)
+        const hashedPassword = request.body.password //await bcrypt.hash(request.body.password, 10)
         const email = request.body.email
         const user_id = prev_user_id
         
@@ -72,5 +83,6 @@ const SignUp = async (request, response) => {
 module.exports = {
     getStores,
     updateStore,
-    SignUp
+    SignUp,
+    pool
 }
