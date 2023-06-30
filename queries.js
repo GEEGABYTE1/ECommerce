@@ -55,7 +55,7 @@ var prev_user_id = 14
 
 const SignUp = async (request, response) => {
     try {
-        const hashedPassword = request.body.password //await bcrypt.hash(request.body.password, 10)
+        const hashedPassword = await bcrypt.hash(request.body.password, 10)
         const email = request.body.email
         const user_id = prev_user_id
         

@@ -39,16 +39,17 @@ passport.deserializeUser((id, done) => {
         if (err) {
             return done(err)
         } else {
-            done(null, row)
+            done(null, row.rows[0])
         }
     })
 })
 
-passport.use(new LocalStrategy({ usernameField: 'email' }, function (email, password, cb) {
+passport.use(new LocalStrategy({ usernameField: 'email' }, function (email, password, cb) { // inputs 'email' and 'password' must follow .ejs ids
+
     console.log("in function>>>>>>>")
     console.log("Username in Strat: ", email )
     console.log("Password in Strat: ", password)
-    db.pool.query('SELECT * FROM customer WHERE customer_email = $1', [email], function(err, row) {
+    db.pool.query('SELECT * FROM customer WHERE customer_email = $1', [email], async function(err, row) { // row holds the array of result
         
         if (err) {
             
@@ -59,13 +60,22 @@ passport.use(new LocalStrategy({ usernameField: 'email' }, function (email, pass
             
             console.log("Incorrect Email or Password")
             return cb(null, false, {message: 'Incorrect Email or Password'})
-        }
-        if(password !== row.rows[0]['customer_password']) {
-            console.log("Row: ", row.rows[0])
-            return cb(null, false)
         } 
+        try {
+            if (await bcrypt.compare(password, row.rows[0]['customer_password'])) {
+                return cb(null, row.rows[0]) // returns the user object from db
+            } else {
+                console.log("Row: ", row.rows[0])
+                return cb(null, false)
+            }
+
+        } catch (err) {
+            return cb(err)
+        }
+
+
+
         
-        return cb(null, row)
     } )
 }))
 
@@ -82,10 +92,14 @@ app.get('/login', (req, res) => {
 })
 app.get('/stores', db.getStores)
 
+app.get('/success', (req, res) => {
+    res.render('success.ejs')
+})
+
 
 // post requests
 app.post('/login', passport.authenticate('local', {
-    successRedirect: '/',
+    successRedirect: '/success',
     failureRedirect: '/register',
     failureFlash: true
 })
@@ -98,6 +112,17 @@ app.post('/login', passport.authenticate('local', {
 app.post('/stores/:store_items/:item_stock/:item_cost', db.updateStore)
 app.post('/register', db.SignUp)
 
+app.get("/logout", (req, res) => {
+    req.logout((err) => {
+        if (err) {
+            console.log(err)
+            next(err)
+        } else {
+            console.log('free')
+        }
+    });
+    res.redirect("/");// redirect to home
+  });
 
 
 
