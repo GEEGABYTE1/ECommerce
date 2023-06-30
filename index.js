@@ -21,6 +21,7 @@ app.use(session({
     store
 }))
 
+// All Passport initialization related
 app.use(flash())
 app.set('view engine', 'ejs')
 app.use(express.urlencoded({ extended: false }))
@@ -79,40 +80,33 @@ passport.use(new LocalStrategy({ usernameField: 'email' }, function (email, pass
     } )
 }))
 
-// get requests 
+// get requests that are API Related
 app.get('/', (req, res) => {
     res.render('index.ejs', {user: req.row})
 
 })
-app.get('/register', (req, res) => {
+app.get('/register', checkNotAuthenticated, (req, res) => {
     return res.render('register.ejs')
 })
-app.get('/login', (req, res) => {
+app.get('/login', checkNotAuthenticated, (req, res) => {
     res.render('login.ejs')
 })
 app.get('/stores', db.getStores)
 
-app.get('/success', (req, res) => {
+app.get('/success', checkAuthenticated, (req, res) => {
     res.render('success.ejs')
 })
 
 
-// post requests
-app.post('/login', passport.authenticate('local', {
+// Passport and Auth related requests
+app.post('/login', checkNotAuthenticated, passport.authenticate('local', {
     successRedirect: '/success',
     failureRedirect: '/register',
     failureFlash: true
 })
-
-
-
 )
 
-//testing other API Routes routes
-app.post('/stores/:store_items/:item_stock/:item_cost', db.updateStore)
-app.post('/register', db.SignUp)
-
-app.get("/logout", (req, res) => {
+app.get("/logout", checkAuthenticated, (req, res) => {
     req.logout((err) => {
         if (err) {
             console.log(err)
@@ -123,6 +117,26 @@ app.get("/logout", (req, res) => {
     });
     res.redirect("/");// redirect to home
   });
+
+function checkAuthenticated(req, res, next) {
+    if (req.isAuthenticated()) {
+        return next()
+    }
+}
+
+function checkNotAuthenticated(req, res, next) {
+    if (req.isAuthenticated()) {
+        return res.redirect('/')
+    }
+
+    next()
+}
+
+
+//testing other API Routes routes
+app.post('/stores/:store_items/:item_stock/:item_cost', db.updateStore)
+app.post('/register', db.SignUp)
+
 
 
 
