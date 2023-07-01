@@ -140,6 +140,85 @@ const searchStoreById = (request, response) => {
     })
 }
 
+const getUserInfo = (request, response) => {
+    const result = request.params
+    console.log('Result: ', result)
+    const user_email = result['email']
+    pool.query('SELECT (id, customer_email, items_owned, purchase_date, store_ids) FROM customer WHERE customer_email = $1;', [user_email], (error, results) => {
+        if (error) {
+            throw error
+        } else {
+            response.status(200).json(results.rows)
+        }
+    })
+}
+
+const updateUserEmail = (request, response) => {
+    const results = request.params
+    console.log("Result: ", results)
+    const prev_user_email = results['email']
+    const new_user_email = results['newemail']
+    pool.query('UPDATE customer SET customer_email = $1 WHERE customer_email = $2', [new_user_email, prev_user_email], (error, results) => {
+        if (error) {
+            throw error
+        } else {
+            response.status(200).json(results.rows)
+        }
+    })
+}
+
+const updateUserPassword = async (request, response) => {
+    const results = request.params
+    console.log("Result: ", results)
+    const email = results['email']
+    const old_password= results['oldpassword']
+    
+    const new_password_str = results['newpassword']
+    
+    
+    pool.query('SELECT customer_password FROM customer WHERE customer_email = $1', [email], async (error, results) => {
+        if (error) {
+            throw error
+        } else {
+            if (await bcrypt.compare(old_password, results.rows[0]['customer_password'])) {
+                console.log("Passwords match")
+                
+                try {
+        
+                    // ensure that the user knows their old password for security 
+                    
+            
+                    const new_password_hashed = await bcrypt.hash(new_password_str, 10)
+                    if (await bcrypt.compare(old_password, new_password_hashed)) {
+                        console.log("New and Old Passwords match, will not update")
+                        return response.status(400)
+                    } else {
+                        console.log("New Password Hashed: ", new_password_hashed)
+                        pool.query('UPDATE customer SET customer_password = $1 WHERE customer_email = $2;', [new_password_hashed, email], (error, results) => {
+                        if (error) {
+                            throw error
+                        } else {
+                            return response.status(200).json(results.rows)
+                        }
+                    })
+                        
+                    }
+                } catch(err) {
+                    console.log(err)
+                }
+
+
+            } else {
+                console.log("passwords will not match")
+                return response.status(400)
+            }
+        }
+    })
+
+
+
+}
+
 module.exports = {
     getStores,
     updateStore,
@@ -147,5 +226,8 @@ module.exports = {
     pool,
     searchItemById,
     searchItemByName,
-    searchStoreById
+    searchStoreById,
+    getUserInfo,
+    updateUserEmail,
+    updateUserPassword
 }

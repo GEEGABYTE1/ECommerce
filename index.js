@@ -100,7 +100,9 @@ app.get('/success', checkAuthenticated, (req, res) => {
 app.get('/search/item/:id', db.searchItemById)
 app.get('/search/item/name/:name', db.searchItemByName)
 app.get('/search/store/id/:id', db.searchStoreById)
-
+app.get('/getprofile/:email', db.getUserInfo)
+app.put('/updateemail/:email/:newemail', db.updateUserEmail)
+app.put('/updatepassword/:email/:oldpassword/:newpassword', db.updateUserPassword)
 
 // Passport and Auth related requests
 app.post('/login', checkNotAuthenticated, passport.authenticate('local', {
