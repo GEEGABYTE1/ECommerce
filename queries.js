@@ -240,6 +240,7 @@ const addToCart = (request, response) => {
     const array = eval(stringed_array)
     console.log("Array of items to query: ", array)
     var store_array = []
+    var store_id = 0
 
     pool.query('SELECT store_items FROM stores WHERE id = $1;', [store], (error, results) => {
         if (error) {
@@ -252,13 +253,18 @@ const addToCart = (request, response) => {
     })
 
 
+
+
     var user_cart_from_db = []  // prev cart for adding new objects
-    pool.query('SELECT customer_cart FROM customer WHERE customer_email = $1', [email], (error, results) => {
+    var store_ids = [] 
+    pool.query('SELECT customer_cart, store_ids FROM customer WHERE customer_email = $1', [email], (error, results) => {
         if (error) {
             throw error
         } else {
             user_cart_from_db = results.rows[0]['customer_cart']
+            store_ids = results.rows[0]['store_ids']
             console.log("Local Cart: ", user_cart_from_db)
+            console.log("Local Store ids: ", store_ids)
 
 
             
@@ -270,15 +276,40 @@ const addToCart = (request, response) => {
         
                 if (store_array.includes(user_item_to_buy)) {
                     console.log("Objects Match!")
-                    user_cart_from_db.push(user_item_to_buy)
+
+                    const index_of_elm = user_cart_from_db.indexOf(user_item_to_buy)
+                    if (index_of_elm === -1) { // new item to cart
+                        user_cart_from_db.push(user_item_to_buy)
+                        store_ids.push(store)
+            
+                    } else {
+                        const store_id_at_index = store_ids[index_of_elm]
+                        if (store_id_at_index === store) {  // see if the item was already bought from another store
+                            console.log("Item Already in Cart!")
+                        } else {
+                            user_cart_from_db.push(user_item_to_buy)    // final good case -> same item bought from another store
+                            store_ids.push(store)
+                        }
+
+                    }
+
+
+
+                
+                    
+                    
+                } else {
+                    
+                    return response.status(500).send(`${user_item_to_buy} not in store: ${store}`)
                 }
         
         
             }
         
             console.log("Updated User Cart From Db: ", user_cart_from_db)
+            console.log("Update Store_ids:  ", store_ids)
             
-            pool.query("UPDATE customer SET customer_cart = $1 WHERE customer_email = $2;", [user_cart_from_db, email], (error, results) => {
+            pool.query("UPDATE customer SET customer_cart = $1, store_ids = $2 WHERE customer_email = $3;", [user_cart_from_db, store_ids, email], (error, results) => {
                 if (error) {
                     throw error
                 } else {
@@ -289,11 +320,6 @@ const addToCart = (request, response) => {
 
         }
     })
-
-
-
-
-   
 
 }
 
