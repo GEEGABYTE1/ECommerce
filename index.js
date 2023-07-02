@@ -101,8 +101,13 @@ app.get('/search/item/:id', db.searchItemById)
 app.get('/search/item/name/:name', db.searchItemByName)
 app.get('/search/store/id/:id', db.searchStoreById)
 app.get('/getprofile/:email', db.getUserInfo)
+app.get('/cart/:email', db.getCart)
+
+// Put requests related to API
 app.put('/updateemail/:email/:newemail', db.updateUserEmail)
 app.put('/updatepassword/:email/:oldpassword/:newpassword', db.updateUserPassword)
+app.put('/:email/addtocart/:items/:store', db.addToCart)  // :items = [item1, item2, item3]
+
 
 // Passport and Auth related requests
 app.post('/login', checkNotAuthenticated, passport.authenticate('local', {

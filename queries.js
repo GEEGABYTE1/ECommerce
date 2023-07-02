@@ -220,6 +220,85 @@ const updateUserPassword = async (request, response) => {
 
 }
 
+const getCart = (request, response) => {
+    const email = request.params['email']
+    console.log("Cart of Email: ", email)
+    pool.query("SELECT customer_cart FROM customer WHERE customer_email = $1;", [email], (error, results) => {
+        if (error) {
+            throw error
+        } else {
+            response.status(200).json(results.rows)
+        }
+    })
+}
+
+const addToCart = (request, response) => {
+    const results = request.params
+    const email = results['email']
+    const store = results['store']
+    const stringed_array = results['items']
+    const array = eval(stringed_array)
+    console.log("Array of items to query: ", array)
+    var store_array = []
+
+    pool.query('SELECT store_items FROM stores WHERE id = $1;', [store], (error, results) => {
+        if (error) {
+            throw error
+        } else {
+            store_array = results.rows[0]["store_items"]
+            console.log("Result Stock Array of Store: ", store_array)
+            //return response.status(200).json(results.rows)
+        }
+    })
+
+
+    var user_cart_from_db = []  // prev cart for adding new objects
+    pool.query('SELECT customer_cart FROM customer WHERE customer_email = $1', [email], (error, results) => {
+        if (error) {
+            throw error
+        } else {
+            user_cart_from_db = results.rows[0]['customer_cart']
+            console.log("Local Cart: ", user_cart_from_db)
+
+
+            
+            for (let i = 0; i <= array.length; i++) {
+                const user_item_to_buy = array[i]
+                if (user_item_to_buy === undefined) {
+                    continue 
+                }
+        
+                if (store_array.includes(user_item_to_buy)) {
+                    console.log("Objects Match!")
+                    user_cart_from_db.push(user_item_to_buy)
+                }
+        
+        
+            }
+        
+            console.log("Updated User Cart From Db: ", user_cart_from_db)
+            
+            pool.query("UPDATE customer SET customer_cart = $1 WHERE customer_email = $2;", [user_cart_from_db, email], (error, results) => {
+                if (error) {
+                    throw error
+                } else {
+                    response.status(200).json(results.rows)
+                }
+            })
+            
+
+        }
+    })
+
+
+
+
+   
+
+}
+
+
+
 module.exports = {
     getStores,
     updateStore,
@@ -230,5 +309,7 @@ module.exports = {
     searchStoreById,
     getUserInfo,
     updateUserEmail,
-    updateUserPassword
+    updateUserPassword,
+    getCart,
+    addToCart
 }
