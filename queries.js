@@ -75,7 +75,8 @@ const SignUp = async (request, response) => {
         const email = request.body.email
         const user_id = prev_user_id
         
-        pool.query("INSERT INTO customer (id, customer_email, customer_password, items_owned, purchase_date, store_ids) VALUES ($1, $2, $3, ARRAY [0], ARRAY [' '], ARRAY [0])", [user_id, email, hashedPassword], (error, results) => {
+        
+        pool.query("INSERT INTO customer (id, customer_email, customer_password, items_owned, purchase_date, store_ids, customer_cart, wallet_amount) VALUES ($1, $2, $3, ARRAY [0], ARRAY [' '], ARRAY [0], ARRAY[' '], 100.00)", [user_id, email, hashedPassword], (error, results) => {
             if (error) {
                 throw error
             }
