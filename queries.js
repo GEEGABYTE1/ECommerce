@@ -31,8 +31,8 @@ const getStores = (req, res) => {
     })
 }
 
-var prev_store_id = 5
-var prev_item_id = 103
+var prev_store_id = 1
+var prev_item_id = 0
 
 const updateStore = (request, response) => {
     const result = request.params
@@ -45,29 +45,38 @@ const updateStore = (request, response) => {
     pool.query('INSERT INTO stores (id, store_items, item_stock, item_cost) VALUES ($1, $2, $3, $4);', [id, store_items, item_stock, item_costs], (error, results) => {
         if (error) {
             throw error
-        }
-        prev_store_id += 1
-        return response.status(200).json(results.rows)
-        
-    })
-    for (let i =0; i <= store_items.length; i++) {
-        console.log(i)
-        const current_item_name = store_items[i]
-        const store_id = prev_store_id 
-        var item_id = prev_item_id
-        var stock = Math.floor((Math.random() * 100) + 1);
-        pool.query('INSERT INTO items (id, store_id, amount_supplied, item_name) VALUES ($1, $2, $3, $4);', [item_id, store_id, stock, current_item_name]), (error, results) => {
-            if (error) {
-                console.log(error)
+        } else {
+            console.log("It was added to stores table")
+            for (let i =0; i < store_items.length; i++) {
+                console.log(i)
+                const current_item_name = store_items[i]
+                const store_id = prev_store_id 
+                var item_id = prev_item_id
+                var stock = item_stock[i]
+                pool.query('INSERT INTO items (id, store_id, amount_supplied, item_name) VALUES ($1, $2, $3, $4);', [item_id, store_id, stock, current_item_name]), (error, results) => {
+                    if (error) {
+                        console.log(error)
+                    }
+                    
+                    console.log("it worked")
+                    //return response.status(200).json(results.rows)
+                }
+                prev_item_id += 1
             }
-            prev_item_id += 1
-            return response.status(200).json(results.rows)
+            prev_store_id += 1
+            response.status(200).send("Store Added Successfully with Stock")
         }
-    }
+        
+                
+    })
+
+
+
+    
 
 }
 
-var prev_user_id = 14
+var prev_user_id = 0
 
 const SignUp = async (request, response) => {
     try {
@@ -241,13 +250,17 @@ const addToCart = (request, response) => {
     console.log("Array of items to query: ", array)
     var store_array = []
     var store_id = 0
+    var stock_store_array = []
+    
 
-    pool.query('SELECT store_items FROM stores WHERE id = $1;', [store], (error, results) => {
+    pool.query('SELECT store_items, item_stock FROM stores WHERE id = $1;', [store], (error, results) => {
         if (error) {
             throw error
         } else {
             store_array = results.rows[0]["store_items"]
+            stock_store_array = results.rows[0]['item_stock']
             console.log("Result Stock Array of Store: ", store_array)
+            console.log("Result of Item Stock Array: ", stock_store_array)
             //return response.status(200).json(results.rows)
         }
     })
@@ -313,13 +326,60 @@ const addToCart = (request, response) => {
                 if (error) {
                     throw error
                 } else {
-                    response.status(200).json(results.rows)
+                    console.log("Cart Successfully Updated!")
+                    
+
+
+                    // updating stock in stores and items
+                    
+                    // Updating Store Stock
+                    for (let j =0; j <= user_cart_from_db.length; j++) {
+                        const item_in_cart = user_cart_from_db[j]
+                        if (item_in_cart === ' ' || item_in_cart === undefined) {
+                            continue
+                        }
+
+                        const index_of_item_in_store = store_array.indexOf(item_in_cart)
+                        var stock_of_item_in_store = stock_store_array[index_of_item_in_store]
+                        console.log("Stock of Item in STore: ", stock_of_item_in_store)
+                        stock_store_array[index_of_item_in_store] -= 1
+                        console.log("Stock of item in store updated: ", stock_store_array[index_of_item_in_store])
+                       
+
+                    }
+                    console.log("Total Updated Stock Array: ", stock_store_array)
+                    
+                    pool.query("UPDATE stores SET item_stock = $1 WHERE id = $2", [stock_store_array, store], (error, results) => {
+                        if (error) {
+                            throw error
+                        } else {
+                            console.log("Store stock successfully updated!")
+                        }
+                    })
+
+                    // Updating Item Stock
+                    
+
+
+
+
+
+
                 }
             })
             
 
         }
     })
+    
+
+    
+
+
+    
+
+
+
 
 }
 
