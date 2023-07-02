@@ -358,7 +358,33 @@ const addToCart = (request, response) => {
                     })
 
                     // Updating Item Stock
-                    
+                    for (let j =0; j <= user_cart_from_db.length; j++) {
+                        const item_in_cart = user_cart_from_db[j]
+                        if (item_in_cart === ' ' || item_in_cart === undefined) {
+                            continue
+                        }
+
+                        pool.query('SELECT amount_supplied FROM items WHERE item_name = $1 AND store_id = $2', [item_in_cart, store], (error, results) => {
+                            if (error) {
+                                throw error
+                            } 
+                            var amount_supplied = results.rows[0]['amount_supplied']
+                            console.log("amount supplied: ", amount_supplied)
+                            var new_amount_supplied = amount_supplied - 1
+                            console.log("New Amount Supplied: ", new_amount_supplied)
+
+                            pool.query("UPDATE items SET amount_supplied = $1 WHERE store_id = $2 AND item_name = $3", [new_amount_supplied, store, item_in_cart], (error, results) => {
+                                if (error) {
+                                    throw error
+                                } else {
+                                    response.status(200).send("Item stock successfully Updated. The items have been completely added to Cart.")
+                                }
+                            })
+    
+
+                        })
+
+                    }
 
 
 
