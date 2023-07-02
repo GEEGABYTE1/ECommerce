@@ -106,7 +106,7 @@ app.get('/cart/:email', db.getCart)
 // Put requests related to API
 app.put('/updateemail/:email/:newemail', db.updateUserEmail)
 app.put('/updatepassword/:email/:oldpassword/:newpassword', db.updateUserPassword)
-app.put('/:email/addtocart/:items/:store', db.addToCart)  // :items = [item1, item2, item3]
+app.put('/:email/addtocart/:items/:quantity/:store', db.addToCart)  // :items = [item1, item2, item3] quantity = [quant1, quant2, ...]
 app.put('/:email/removefromcart/:item/:store')
 
 // Passport and Auth related requests

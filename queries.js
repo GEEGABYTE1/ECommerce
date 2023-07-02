@@ -85,7 +85,7 @@ const SignUp = async (request, response) => {
         const user_id = prev_user_id
         
         
-        pool.query("INSERT INTO customer (id, customer_email, customer_password, items_owned, purchase_date, store_ids, customer_cart, wallet_amount) VALUES ($1, $2, $3, ARRAY [0], ARRAY [' '], ARRAY [0], ARRAY[' '], 100.00)", [user_id, email, hashedPassword], (error, results) => {
+        pool.query("INSERT INTO customer (id, customer_email, customer_password, items_owned, purchase_date, store_ids, customer_cart, wallet_amount, quantity) VALUES ($1, $2, $3, ARRAY [0], ARRAY [' '], ARRAY [0], ARRAY[' '], 100.00, ARRAY[0])", [user_id, email, hashedPassword], (error, results) => {
             if (error) {
                 throw error
             }
@@ -247,7 +247,9 @@ const addToCart = (request, response) => {
     const store = results['store']
     const stringed_array = results['items']
     const array = eval(stringed_array)
+    var quantity = eval(results['quantity'])
     console.log("Array of items to query: ", array)
+    console.log("Quantity Array: ", quantity)
     var store_array = []
     var store_id = 0
     var stock_store_array = []
@@ -270,14 +272,17 @@ const addToCart = (request, response) => {
 
     var user_cart_from_db = []  // prev cart for adding new objects
     var store_ids = [] 
-    pool.query('SELECT customer_cart, store_ids FROM customer WHERE customer_email = $1', [email], (error, results) => {
+    var quantities = []
+    pool.query('SELECT customer_cart, store_ids, quantity FROM customer WHERE customer_email = $1', [email], (error, results) => {
         if (error) {
             throw error
         } else {
             user_cart_from_db = results.rows[0]['customer_cart']
             store_ids = results.rows[0]['store_ids']
+            quantities = results.rows[0]['quantity']
             console.log("Local Cart: ", user_cart_from_db)
             console.log("Local Store ids: ", store_ids)
+            console.log("Local quantities: ", quantities)
 
 
             
@@ -290,26 +295,9 @@ const addToCart = (request, response) => {
                 if (store_array.includes(user_item_to_buy)) {
                     console.log("Objects Match!")
 
-                    const index_of_elm = user_cart_from_db.indexOf(user_item_to_buy)
-                    if (index_of_elm === -1) { // new item to cart
-                        user_cart_from_db.push(user_item_to_buy)
-                        store_ids.push(store)
-            
-                    } else {
-                        const store_id_at_index = store_ids[index_of_elm]
-                        if (store_id_at_index === store) {  // see if the item was already bought from another store
-                            console.log("Item Already in Cart!")
-                        } else {
-                            user_cart_from_db.push(user_item_to_buy)    // final good case -> same item bought from another store
-                            store_ids.push(store)
-                        }
+                    user_cart_from_db.push(user_item_to_buy)
+                    store_ids.push(store)
 
-                    }
-
-
-
-                
-                    
                     
                 } else {
                     
@@ -321,78 +309,121 @@ const addToCart = (request, response) => {
         
             console.log("Updated User Cart From Db: ", user_cart_from_db)
             console.log("Update Store_ids:  ", store_ids)
-            
-            pool.query("UPDATE customer SET customer_cart = $1, store_ids = $2 WHERE customer_email = $3;", [user_cart_from_db, store_ids, email], (error, results) => {
-                if (error) {
-                    throw error
+            var updating_status = false
+
+            for (let idx = 0; idx <= user_cart_from_db.length; idx ++) {
+                
+                const item = user_cart_from_db[idx]
+                
+                
+                const user_quantity = quantity[idx]
+                console.log("Item: ", item)
+                if (item === undefined || item === ' ') {
+                    continue
+                }
+                const item_index_in_store_array = store_array.indexOf(item)
+                const stock = stock_store_array[item_index_in_store_array]
+                console.log("stock store array: ", stock_store_array)
+                console.log("elemt of stock store array: ", stock_store_array[idx - 1])
+                console.log(`Item: ${item} Stock: ${stock} Desired Quantity: ${user_quantity}`)
+                if (stock <= 0) {
+                    console.log("Item is out of stock")
+                    return response.status(500).send("Item is out of stock.")
+                    updating_status = false
+                }
+                else if (user_quantity > stock) {
+                    return response.status(500).send("User Quantity is greater than stock provided. Please reduce your desired quantity")
+                    updating_status = false
                 } else {
-                    console.log("Cart Successfully Updated!")
-                    
+                    updating_status = true
+                }
 
-
-                    // updating stock in stores and items
-                    
-                    // Updating Store Stock
-                    for (let j =0; j <= user_cart_from_db.length; j++) {
-                        const item_in_cart = user_cart_from_db[j]
-                        if (item_in_cart === ' ' || item_in_cart === undefined) {
-                            continue
+                
+                
+            }
+            var final_quantity_array = quantities.concat(quantity)
+            if (updating_status === true) {
+                pool.query("UPDATE customer SET customer_cart = $1, store_ids = $2, quantity=$3 WHERE customer_email = $4;", [user_cart_from_db, store_ids, final_quantity_array, email], (error, results) => {
+                    if (error) {
+                        throw error
+                    } else {
+                        console.log("Cart Successfully Updated!")
+                        
+    
+    
+                        // updating stock in stores and items
+                        
+                        // Updating Store Stock
+                        for (let j =0; j <= user_cart_from_db.length; j++) {
+                            const item_in_cart = user_cart_from_db[j]
+                            if (item_in_cart === ' ' || item_in_cart === undefined) {
+                                continue
+                            }
+                            
+                            const index_of_item_in_req = array.indexOf(item_in_cart)
+                            const index_of_item_in_store = store_array.indexOf(item_in_cart)
+                            var stock_of_item_in_store = stock_store_array[index_of_item_in_store]
+                            console.log("Stock of Item in STore: ", stock_of_item_in_store)
+                            console.log("Quantity for subtraction: ", quantity[index_of_item_in_req])
+                            stock_store_array[index_of_item_in_store] -= quantity[index_of_item_in_req]
+                            console.log("Stock of item in store updated: ", stock_store_array[index_of_item_in_store])
+                           
+    
                         }
-
-                        const index_of_item_in_store = store_array.indexOf(item_in_cart)
-                        var stock_of_item_in_store = stock_store_array[index_of_item_in_store]
-                        console.log("Stock of Item in STore: ", stock_of_item_in_store)
-                        stock_store_array[index_of_item_in_store] -= 1
-                        console.log("Stock of item in store updated: ", stock_store_array[index_of_item_in_store])
-                       
-
-                    }
-                    console.log("Total Updated Stock Array: ", stock_store_array)
-                    
-                    pool.query("UPDATE stores SET item_stock = $1 WHERE id = $2", [stock_store_array, store], (error, results) => {
-                        if (error) {
-                            throw error
-                        } else {
-                            console.log("Store stock successfully updated!")
-                        }
-                    })
-
-                    // Updating Item Stock
-                    for (let j =0; j <= user_cart_from_db.length; j++) {
-                        const item_in_cart = user_cart_from_db[j]
-                        if (item_in_cart === ' ' || item_in_cart === undefined) {
-                            continue
-                        }
-
-                        pool.query('SELECT amount_supplied FROM items WHERE item_name = $1 AND store_id = $2', [item_in_cart, store], (error, results) => {
+                        console.log("Total Updated Stock Array: ", stock_store_array)
+                        
+                        pool.query("UPDATE stores SET item_stock = $1 WHERE id = $2", [stock_store_array, store], (error, results) => {
                             if (error) {
                                 throw error
-                            } 
-                            var amount_supplied = results.rows[0]['amount_supplied']
-                            console.log("amount supplied: ", amount_supplied)
-                            var new_amount_supplied = amount_supplied - 1
-                            console.log("New Amount Supplied: ", new_amount_supplied)
-
-                            pool.query("UPDATE items SET amount_supplied = $1 WHERE store_id = $2 AND item_name = $3", [new_amount_supplied, store, item_in_cart], (error, results) => {
+                            } else {
+                                console.log("Store stock successfully updated!")
+                            }
+                        })
+    
+                        // Updating Item Stock
+                        for (let j =0; j <= user_cart_from_db.length; j++) {
+                            const item_in_cart = user_cart_from_db[j]
+                            if (item_in_cart === ' ' || item_in_cart === undefined) {
+                                continue
+                            }
+                            const index_of_item_in_req = array.indexOf(item_in_cart)
+                            pool.query('SELECT amount_supplied FROM items WHERE item_name = $1 AND store_id = $2', [item_in_cart, store], (error, results) => {
                                 if (error) {
                                     throw error
-                                } else {
-                                    response.status(200).send("Item stock successfully Updated. The items have been completely added to Cart.")
-                                }
+                                } 
+                                var amount_supplied = results.rows[0]['amount_supplied']
+                                console.log("amount supplied: ", amount_supplied)
+                                var new_amount_supplied = amount_supplied - quantity[index_of_item_in_req]
+                                console.log("New Amount Supplied: ", new_amount_supplied)
+    
+                                pool.query("UPDATE items SET amount_supplied = $1 WHERE store_id = $2 AND item_name = $3", [new_amount_supplied, store, item_in_cart], (error, results) => {
+                                    if (error) {
+                                        throw error
+                                    } else {
+                                        return response.status(200).send("Item stock successfully Updated. The items have been completely added to Cart.")
+                                    }
+                                })
+        
+    
                             })
     
-
-                        })
-
+                        }
+    
+    
+    
+    
+    
+    
                     }
+                })
+            } else {
+                return response.status(500).send("There seems to be an error regarding 'quantity' for ordering.")
 
 
+            }
 
+            
 
-
-
-                }
-            })
             
 
         }
