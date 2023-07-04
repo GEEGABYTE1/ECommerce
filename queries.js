@@ -594,6 +594,10 @@ const removeFromCart = (request, response) => {
 const checkout = (request, response) => {
     const email = request.params['email']
     var filtered_dict = {}
+    var user_wallet;
+    var purchases;
+    var date_array = []
+    var customer_id;
     pool.query('SELECT * FROM customer WHERE customer_email = $1', [email], (error, results) => {
         if (error) {
             throw error
@@ -602,6 +606,10 @@ const checkout = (request, response) => {
             var store_ids = results.rows[0]['store_ids']
             var customer_cart = results.rows[0]['customer_cart']
             var quantity = results.rows[0]['quantity']
+            user_wallet = results.rows[0]['wallet_amount']
+            purchases = results.rows[0]['items_owned'][0]
+            date_array = results.rows[0]['purchase_date']
+            customer_id = results.rows[0]['id']
 
             for (let store_idx = 0; store_idx <= store_ids.length; store_idx ++ ) {
                 if (store_ids[store_idx] === undefined || store_ids[store_idx] ===  ' ') {
@@ -627,6 +635,83 @@ const checkout = (request, response) => {
                 }
             }
             console.log("Filtered Dict Final: ", filtered_dict)
+
+            var filtered_dict_keys = Object.keys(filtered_dict)
+            for (let dict_key_idx = 0; dict_key_idx <= filtered_dict_keys.length; dict_key_idx++) {
+                const store_id = filtered_dict_keys[dict_key_idx]
+                if (store_id === undefined) {
+                    continue
+                } else {
+                    pool.query("SELECT * FROM stores WHERE id =$1", [store_id], (error, results) => {
+                        if (error) {
+                            throw error
+                        }
+
+                        console.log(results.rows[0])
+                        var store_items = results.rows[0]['store_items']
+                        var item_cost = results.rows[0]['item_cost']
+                        var filtered_dict_items = filtered_dict[store_id]
+                        console.log("Filtered Dict Items: ", filtered_dict_items)
+                        var filtered_dict_items_keys = Object.keys(filtered_dict_items)
+                        var total_cost = 0 // total cost to keep track of when comparing with cart
+                        for (let item_idx = 0; item_idx <= filtered_dict_items_keys.length; item_idx++) {
+                            var cur_item = filtered_dict_items_keys[item_idx]
+                            if (cur_item === undefined) {
+                                continue
+                            } else {
+                                var store_item_idx = store_items.indexOf(cur_item)
+                                var price_string = item_cost[store_item_idx]
+                                var customer_quantity = filtered_dict_items[cur_item]
+                                console.log("Store Item: ", cur_item)
+                                console.log("Customer Quantity: ", customer_quantity)
+                                console.log("Price: ", price_string)
+                                var price_string_without_sign = price_string.substring(1)
+                                
+                                var price_float = parseFloat(price_string_without_sign)
+                                var total_price_float = price_float * customer_quantity
+                                console.log("Price Float: ", total_price_float)
+
+
+                                total_cost += total_price_float
+                            }
+
+
+                        }
+                        console.log("Total Cart Cost: ", total_cost)
+                        if (total_cost <  user_wallet) {
+                            var user_wallet_leftover_amount = user_wallet-total_cost
+                            const date = new Date();
+
+                            let day = date.getDate();
+                            let month = date.getMonth() + 1;
+                            let year = date.getFullYear();
+                            let new_date = `${day}-${month}-${year}`;
+                            date_array.push(new_date)
+                            purchases += 1
+                            pool.query("UPDATE customer SET items_owned = $1, purchase_date = $2, store_ids = ARRAY [' '], customer_cart = ARRAY[' '], wallet_amount = $3, quantity = ARRAY[0]", [[purchases], date_array, user_wallet_leftover_amount], (error, results) => {
+                                if (error) {
+                                    throw error
+                                }
+                                console.log("Transaction is complete")
+                                console.log("Updating Orders Table")
+                                pool.query('INSERT INTO orders (customer_id, items, stores, datestamp, customer_coast, wallet_amount_after_leftover) VALUES($1, $2, $3, $4, $5, $6)', [ customer_id, customer_cart, store_ids, new_date, total_cost, user_wallet_leftover_amount], (error, results) => {
+                                    if (error) {
+                                        throw error
+                                    } else {
+                                        response.status(200).send("Transaction Completed Successfully!")
+                                    }
+                                })
+                                
+                            })
+                        } else {
+                            response.status(500).send("You do not have enough funds in your wallet to create this transaction")
+                        }
+                    })
+                }
+
+
+
+            }
             
 
         }
