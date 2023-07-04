@@ -247,7 +247,7 @@ const addToCart = (request, response) => {
     const store = results['store']
     const stringed_array = results['items']
     const array = eval(stringed_array)
-    var quantity = eval(results['quantity'])
+    var quantity = eval(results['quantity']) // must be an array
     console.log("Array of items to query: ", array)
     console.log("Quantity Array: ", quantity)
     var store_array = []
@@ -428,17 +428,152 @@ const addToCart = (request, response) => {
 
         }
     })
-    
-
-    
-
-
-    
-
-
 
 
 }
+
+const removeFromCart = (request, response) => {
+    // removal of only one item at a time
+    const user_email = request.params['email']
+    const item_name = request.params['item']
+    const item_quantity = eval(request.params['quantity'])[0] // must be an array
+    const store_id = request.params['store']
+
+    pool.query("SELECT * FROM customer WHERE customer_email = $1", [user_email], (error, results) => {
+        if (error) {
+            throw error
+        } else {
+            console.log(results.rows[0])
+            const customer_cart = results.rows[0]['customer_cart']
+            console.log("Customer Cart: ", customer_cart)
+            console.log("Item Name: ", item_name)
+            const customer_quantity_array = results.rows[0]['quantity']
+            const customer_store_ids = results.rows[0]['store_ids']
+            const index_of_removal_item_in_customer = customer_cart.indexOf(item_name)
+            if (index_of_removal_item_in_customer === -1) {
+                return response.status(500).send("Item does not exist in cart")
+            } 
+            
+            var updated_customer_cart = []
+            var updated_quantity_array = []
+            var updated_store_ids = []
+            for (let i =0; i<= customer_cart.length; i++) { // updating cart
+                
+                if (i === index_of_removal_item_in_customer) {
+                    if (customer_quantity_array[i] >= item_quantity) {
+                        
+                        const difference = customer_quantity_array[i] - item_quantity
+                        if (difference > 0) {
+                            updated_quantity_array.push(difference)
+                            updated_customer_cart.push(customer_cart[i])
+                            updated_store_ids.push(customer_store_ids[i])
+                        } else {
+                            continue
+                        }
+                        
+                    } else {
+                        return response.status(500).send("Amount of removal is larger than amount in cart")
+                    }
+
+                    if (customer_store_ids[i] === store_id) {
+                        continue
+                    } else {
+                        return response.status(500).send("Amount not found in store to remove from cart")
+                    }
+
+                } else {
+                    if (customer_cart[i] !== undefined) {
+                        updated_customer_cart.push(customer_cart[i])
+                    }
+                    if (customer_quantity_array[i] !== undefined) {
+                        updated_quantity_array.push(customer_quantity_array[i])
+                        
+                    }
+
+                    if (customer_store_ids[i] !== undefined) {
+
+                        updated_store_ids.push(customer_store_ids[i])
+                    }
+                    
+                }
+            }
+            console.log("Updated Customer Carts: ", updated_customer_cart)
+            console.log("Updated Quantity Array: ", updated_quantity_array)
+            console.log("Updated Store ids: ", updated_store_ids)
+            pool.query("UPDATE customer SET store_ids = $1, customer_cart = $2, quantity = $3 WHERE customer_email = $4", [updated_store_ids, updated_customer_cart, updated_quantity_array, user_email], (error, results) => {
+                if (error) {
+                    throw error
+                }
+
+                // rest of removal of items in other tables
+
+                // updating items table
+                pool.query('SELECT amount_supplied FROM items WHERE item_name = $1 AND store_id = $2', [item_name, store_id], (error, results) => {
+                    if (error) {
+                        throw error
+                    }
+
+                    var current_amount_supplied = results.rows[0]['amount_supplied']
+                    console.log("Current Amount Supplied: ", current_amount_supplied)
+                    current_amount_supplied += item_quantity
+                    console.log("Updated Amount Supplied: ", current_amount_supplied)
+                    pool.query('UPDATE items SET amount_supplied = $1 WHERE item_name = $2 AND store_id = $3', [current_amount_supplied, item_name, store_id], (error, results) => {
+                        if (error) {
+                            throw error
+                        } else {
+                            console.log("Updated Items successfully")
+
+                            // Updating Store Table
+
+                            pool.query('SELECT * FROM stores WHERE id = $1', [store_id], (error, results) => {
+                                if (error) {
+                                    throw error
+                                } 
+                                const row_results = results.rows[0]
+                                console.log("Row Results: ", row_results)
+                                var row_store_items = row_results['store_items']
+                                var row_item_stock = row_results['item_stock']
+                                const index_of_item_in_row_store_items = row_store_items.indexOf(item_name)
+                                
+                                var updated_row_item_stock = []
+                                for (let j = 0; j <= row_store_items.length; j++) {
+                                    if (j === index_of_item_in_row_store_items) {
+                                        var current_item_stock = row_item_stock[j]
+                                        current_item_stock += 1
+                                        updated_row_item_stock.push(current_item_stock)
+
+                                    } else {
+                                        if (row_item_stock[j] !== undefined) {
+                                            updated_row_item_stock.push(row_item_stock[j])
+                                        }
+                                    }
+                                    
+                                    
+                                }
+
+                                console.log("Updated Row Item Stock: ", updated_row_item_stock)
+                                pool.query('UPDATE stores SET store_items = $1, item_stock = $2 WHERE id = $3', [row_store_items, updated_row_item_stock, store_id], (error, results) => {
+                                    if (error) {
+                                        throw error
+                                    } else {
+                                        return response.status(200).send("Item has been removed successfully")
+                                    }
+                                })
+
+                            })
+                        }
+                    })
+            
+                })
+
+            })
+
+        }
+    })
+
+}
+
+
 
 
 
@@ -454,5 +589,6 @@ module.exports = {
     updateUserEmail,
     updateUserPassword,
     getCart,
-    addToCart
+    addToCart,
+    removeFromCart
 }
