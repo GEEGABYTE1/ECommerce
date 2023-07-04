@@ -738,6 +738,69 @@ const getTransactionHistory = (request, response) => {
     } )
 }
 
+const newStock = (request, response) => {
+    const results = request.params
+    const store_id = results['storeid']
+    const new_items = eval(results['items'])
+    const new_item_costs = eval(results['cost'])
+    const new_item_quantities = eval(results['quantity'])
+    var updated_item_array;
+    var updated_cost_array;
+    var updated_quantity_array;
+    pool.query('SELECT * FROM stores WHERE id = $1', [store_id], (error, results) => {
+        if (error) {
+            throw error
+        } else {
+            var result = results.rows[0]
+            var old_items = result['store_items']
+            var old_item_stock = result['item_stock']
+            var old_prices = result['item_cost']
+            
+            for (let i =0; i <= new_items.length; i++) {
+                const new_item = new_items[i]
+                if (new_item === undefined) {
+                    continue
+                } else {
+                    if (old_items.includes(new_item)) {
+                        response.status(500).send("An item you want to add in the store already exists in stock!")
+                    }
+                }
+            }
+
+            updated_item_array = old_items.concat(new_items)
+            console.log("Updated Item Array: ", updated_item_array)
+            updated_cost_array = old_prices.concat(new_item_costs)
+            console.log("Updated Cost Array: ", updated_cost_array)
+            updated_quantity_array = old_item_stock.concat(new_item_quantities)
+            console.log("Updated Quantity Array: ", updated_quantity_array)
+            pool.query('UPDATE stores SET store_items = $1, item_stock = $2, item_cost = $3 WHERE id = $4', [updated_item_array, updated_quantity_array, updated_cost_array, store_id], (error, results) => {
+                if (error) {
+                    throw error
+                } 
+                console.log("stores table updated successfully!")
+                for (let k = 0; k <= new_items.length; k++) {
+                    var new_item = new_items[k]
+                    if (new_item === undefined) {
+                        continue 
+                    } else{
+                        var new_item_quantity = new_item_quantities[k]
+                        pool.query('INSERT INTO items (id, store_id, amount_supplied, item_name) VALUES ($1, $2, $3, $4)', [prev_item_id + 1, store_id, new_item_quantity, new_item], (error, results) => {
+                            if (error) {
+                                throw error
+                            } 
+                            response.status(200).send("New stock has been added to store")
+                        } )
+                    }
+                }
+
+            })
+
+
+        }
+    })
+
+}
+
 
 
 
@@ -761,5 +824,7 @@ module.exports = {
     addToCart,
     removeFromCart,
     checkout,
-    getTransactionHistory
+    getTransactionHistory,
+    newStock
+
 }

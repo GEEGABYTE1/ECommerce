@@ -110,6 +110,7 @@ app.put('/updatepassword/:email/:oldpassword/:newpassword', db.updateUserPasswor
 app.put('/:email/addtocart/:items/:quantity/:store', db.addToCart)  // :items = [item1, item2, item3] quantity = [quant1, quant2, ...]
 app.put('/:email/removefromcart/:item/:quantity/:store', db.removeFromCart)
 app.put('/:email/checkout', db.checkout) // inserts new row in 'Orders' Table
+app.put('/updatestock/:storeid/:items/:cost/:quantity', db.newStock) // items = ['item1', 'item2'] cost = ['$cost1', '$cost2']
 
 // Passport and Auth related requests
 app.post('/login', checkNotAuthenticated, passport.authenticate('local', {
