@@ -85,7 +85,7 @@ const SignUp = async (request, response) => {
         const user_id = prev_user_id
         
         
-        pool.query("INSERT INTO customer (id, customer_email, customer_password, items_owned, purchase_date, store_ids, customer_cart, wallet_amount, quantity) VALUES ($1, $2, $3, ARRAY [0], ARRAY [' '], ARRAY [0], ARRAY[' '], 100.00, ARRAY[0])", [user_id, email, hashedPassword], (error, results) => {
+        pool.query("INSERT INTO customer (id, customer_email, customer_password, total_purchases, purchase_date, store_ids, customer_cart, wallet_amount, quantity) VALUES ($1, $2, $3, ARRAY [0], ARRAY [' '], ARRAY [0], ARRAY[' '], 100.00, ARRAY[0])", [user_id, email, hashedPassword], (error, results) => {
             if (error) {
                 throw error
             }
@@ -154,7 +154,7 @@ const getUserInfo = (request, response) => {
     const result = request.params
     console.log('Result: ', result)
     const user_email = result['email']
-    pool.query('SELECT (id, customer_email, items_owned, purchase_date, store_ids) FROM customer WHERE customer_email = $1;', [user_email], (error, results) => {
+    pool.query('SELECT (id, customer_email, total_purchases, purchase_date, store_ids) FROM customer WHERE customer_email = $1;', [user_email], (error, results) => {
         if (error) {
             throw error
         } else {
@@ -595,7 +595,7 @@ const checkout = (request, response) => {
     const email = request.params['email']
     var filtered_dict = {}
     var user_wallet;
-    var purchases;
+    var purchases; 
     var date_array = []
     var customer_id;
     pool.query('SELECT * FROM customer WHERE customer_email = $1', [email], (error, results) => {
@@ -607,7 +607,7 @@ const checkout = (request, response) => {
             var customer_cart = results.rows[0]['customer_cart']
             var quantity = results.rows[0]['quantity']
             user_wallet = results.rows[0]['wallet_amount']
-            purchases = results.rows[0]['items_owned'][0]
+            purchases = results.rows[0]['total_purchases'][0]
             date_array = results.rows[0]['purchase_date']
             customer_id = results.rows[0]['id']
 
@@ -688,7 +688,7 @@ const checkout = (request, response) => {
                             let new_date = `${day}-${month}-${year}`;
                             date_array.push(new_date)
                             purchases += 1
-                            pool.query("UPDATE customer SET items_owned = $1, purchase_date = $2, store_ids = ARRAY [' '], customer_cart = ARRAY[' '], wallet_amount = $3, quantity = ARRAY[0]", [[purchases], date_array, user_wallet_leftover_amount], (error, results) => {
+                            pool.query("UPDATE customer SET total_purchases = $1, purchase_date = $2, store_ids = ARRAY [' '], customer_cart = ARRAY[' '], wallet_amount = $3, quantity = ARRAY[0]", [[purchases], date_array, user_wallet_leftover_amount], (error, results) => {
                                 if (error) {
                                     throw error
                                 }
@@ -718,6 +718,25 @@ const checkout = (request, response) => {
     })
 }
 
+const getTransactionHistory = (request, response) => {
+    var user_id;
+    const user_email = request.params['email']
+
+    pool.query('SELECT id FROM customer WHERE customer_email = $1', [user_email], (error, results) => {
+        if (error) {
+            throw error
+        } else {
+            user_id = results.rows[0]['id']
+            pool.query('SELECT * FROM orders WHERE customer_id = $1', [user_id], (error, results) => {
+                if (error) {
+                    throw error
+                } else {
+                    response.status(200).json(results.rows)
+                }
+            })
+        }
+    } )
+}
 
 
 
@@ -741,5 +760,6 @@ module.exports = {
     getCart,
     addToCart,
     removeFromCart,
-    checkout
+    checkout,
+    getTransactionHistory
 }
