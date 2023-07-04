@@ -112,7 +112,7 @@ app.put('/:email/removefromcart/:item/:quantity/:store', db.removeFromCart)
 app.put('/:email/checkout', db.checkout) // inserts new row in 'Orders' Table
 app.put('/updatestock/:storeid/:items/:cost/:quantity', db.newStock) // items = ['item1', 'item2'] cost = ['$cost1', '$cost2']
 app.put('/updatestock/:storeid/:item_name/:quantity', db.updateStock) // quantity = 1 --> this for 'each' item and not a list
-app.put('/updatesupply/:storeid/:itemname:/quantity', db.updateSupply)
+app.put('/updatesupply/:storeid/:itemname/:quantity', db.updateSupply) // updating supply of singular item in 'items' table
 // Passport and Auth related requests
 app.post('/login', checkNotAuthenticated, passport.authenticate('local', {
     successRedirect: '/success',

@@ -853,7 +853,22 @@ const updateSupply = (request, response) => {
     const store_id = request.params['storeid']
     const item_name = request.params['itemname']
     const new_quantity = parseInt(request.params['quantity'])
-    
+    pool.query('SELECT amount_supplied FROM items WHERE store_id = $1 AND item_name = $2', [store_id, item_name], (error, results) => {
+        if (error) {
+            throw error
+        } else{
+            var amount_supplied = results.rows[0]['amount_supplied']
+            var new_amount = new_quantity + amount_supplied
+            console.log("New Amount Supplied: ", new_amount)
+            pool.query('UPDATE items SET amount_supplied = $1 WHERE store_id = $2 AND item_name = $3', [new_amount, store_id, item_name], (error, results) => {
+                if (error) {
+                    throw error
+                } else{
+                    response.status(200).send("Supplied amount updated")
+                }
+            })
+        }
+    })
 }
 
 
@@ -878,6 +893,7 @@ module.exports = {
     checkout,
     getTransactionHistory,
     newStock,
-    updateStock
+    updateStock,
+    updateSupply
 
 }
