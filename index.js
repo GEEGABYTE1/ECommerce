@@ -108,7 +108,7 @@ app.put('/updateemail/:email/:newemail', db.updateUserEmail)
 app.put('/updatepassword/:email/:oldpassword/:newpassword', db.updateUserPassword)
 app.put('/:email/addtocart/:items/:quantity/:store', db.addToCart)  // :items = [item1, item2, item3] quantity = [quant1, quant2, ...]
 app.put('/:email/removefromcart/:item/:quantity/:store', db.removeFromCart)
-
+app.put('/:email/checkout', db.checkout)
 
 // Passport and Auth related requests
 app.post('/login', checkNotAuthenticated, passport.authenticate('local', {

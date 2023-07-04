@@ -591,6 +591,51 @@ const removeFromCart = (request, response) => {
 
 }
 
+const checkout = (request, response) => {
+    const email = request.params['email']
+    var filtered_dict = {}
+    pool.query('SELECT * FROM customer WHERE customer_email = $1', [email], (error, results) => {
+        if (error) {
+            throw error
+        } else {
+            console.log(results.rows[0])
+            var store_ids = results.rows[0]['store_ids']
+            var customer_cart = results.rows[0]['customer_cart']
+            var quantity = results.rows[0]['quantity']
+
+            for (let store_idx = 0; store_idx <= store_ids.length; store_idx ++ ) {
+                if (store_ids[store_idx] === undefined || store_ids[store_idx] ===  ' ') {
+                    continue
+                } else {
+                    console.log("Current Element: ", store_ids[store_idx])
+                    const filtered_dict_keys = Object.keys(filtered_dict)
+                    if (filtered_dict_keys.includes(store_ids[store_idx])) {
+                        var nested_dict = filtered_dict[store_ids[store_idx]]
+                        console.log("Nested Dictionary of Key: ", nested_dict)
+                        const item = customer_cart[store_idx]
+                        const quantity_sing = quantity[store_idx]
+                        nested_dict[item] = quantity_sing
+                        console.log("Updated Nested Dict: ", nested_dict)
+
+                    } else {
+                        var store_id = store_ids[store_idx]
+                        var local_item = `${customer_cart[store_idx]}`
+                        var quantity_sing = quantity[store_idx]
+                        filtered_dict[store_id] = {[local_item]:quantity_sing}
+                        console.log("New Element in Dict Created")
+                    }
+                }
+            }
+            console.log("Filtered Dict Final: ", filtered_dict)
+            
+
+        }
+    })
+}
+
+
+
+
 
 
 
@@ -610,5 +655,6 @@ module.exports = {
     updateUserPassword,
     getCart,
     addToCart,
-    removeFromCart
+    removeFromCart,
+    checkout
 }
