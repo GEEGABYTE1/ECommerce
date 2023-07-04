@@ -801,8 +801,60 @@ const newStock = (request, response) => {
 
 }
 
+const updateStock = (request, response) => {
+    const store_id = request.params['storeid']
+    const item_name = request.params['item_name']
+    var quantity = parseInt(request.params['quantity'])
+    pool.query("SELECT store_items, item_stock FROM stores WHERE id = $1", [store_id], (error, results) => {
+        if (error) {
+            throw error
+        } else {
+            const items = results.rows[0]['store_items']
+            const item_index = items.indexOf(item_name)
+            if (item_index === -1) {
+                response.status(500).send("Object not found to update stock for")
 
+            } else {
+                const quantity_array = results.rows[0]['item_stock']
+                var cur_quantity = quantity_array[item_index]
+                var new_quantity = cur_quantity + quantity
+                console.log("Current Quantity Array: ", quantity_array)
+                quantity_array[item_index] = new_quantity
+                console.log("Updated Quantity Array: ", quantity_array)
+                pool.query('UPDATE stores SET item_stock = $1 WHERE id = $2', [quantity_array, store_id], (error, results) => {
+                    if (error) {
+                        throw error
+                    } else{
+                        console.log("stores table updated")
+                        pool.query('SELECT amount_supplied FROM items WHERE item_name = $1 AND store_id = $2',[item_name, store_id], (error, results) => {
+                            if (error) {
+                                throw error
+                            } else{
+                                var amount_supplied = results.rows[0]['amount_supplied']
+                                var new_amount_supplied = amount_supplied + new_quantity
+                                console.log("New Amount Supplied: ", new_amount_supplied)
+                                pool.query('UPDATE items SET amount_supplied = $1 WHERE item_name = $2 AND store_id = $3', [new_amount_supplied, item_name, store_id], (error, results) => {
+                                    if (error) {
+                                        throw error
+                                    } else {
+                                        response.status(200).send("Stock Updated Successfully")
+                                    }
+                                })
+                            }
+                        })
+                    }
+                })
+            }
+        }
+    })
+}
 
+const updateSupply = (request, response) => {
+    const store_id = request.params['storeid']
+    const item_name = request.params['itemname']
+    const new_quantity = parseInt(request.params['quantity'])
+    
+}
 
 
 
@@ -825,6 +877,7 @@ module.exports = {
     removeFromCart,
     checkout,
     getTransactionHistory,
-    newStock
+    newStock,
+    updateStock
 
 }

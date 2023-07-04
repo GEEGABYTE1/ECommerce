@@ -111,7 +111,8 @@ app.put('/:email/addtocart/:items/:quantity/:store', db.addToCart)  // :items = 
 app.put('/:email/removefromcart/:item/:quantity/:store', db.removeFromCart)
 app.put('/:email/checkout', db.checkout) // inserts new row in 'Orders' Table
 app.put('/updatestock/:storeid/:items/:cost/:quantity', db.newStock) // items = ['item1', 'item2'] cost = ['$cost1', '$cost2']
-
+app.put('/updatestock/:storeid/:item_name/:quantity', db.updateStock) // quantity = 1 --> this for 'each' item and not a list
+app.put('/updatesupply/:storeid/:itemname:/quantity', db.updateSupply)
 // Passport and Auth related requests
 app.post('/login', checkNotAuthenticated, passport.authenticate('local', {
     successRedirect: '/success',
@@ -148,7 +149,7 @@ function checkNotAuthenticated(req, res, next) {
 
 
 //testing other API Routes routes
-app.post('/stores/:store_items/:item_stock/:item_cost', db.updateStore)
+app.post('/stores/:store_items/:item_stock/:item_cost', db.updateStore) // add new store to stores table
 app.post('/register', db.SignUp)
 
 
