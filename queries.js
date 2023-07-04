@@ -366,13 +366,31 @@ const addToCart = (request, response) => {
                             console.log("Stock of Item in STore: ", stock_of_item_in_store)
                             console.log("Quantity for subtraction: ", quantity[index_of_item_in_req])
                             stock_store_array[index_of_item_in_store] -= quantity[index_of_item_in_req]
+
+                            var updated_stock_store_array = []
+                            var updated_store_array = []
+                            for (let k = 0; k <= stock_store_array.length; k++) {
+                                if (stock_store_array[k] === undefined) {
+                                    continue
+                                } else {
+                                    if (stock_store_array[k] === 0) {
+                                        console.log("The item is now out of stock and will be removed from marketplace")
+                                        continue
+                                    } else {
+                                        updated_stock_store_array.push(stock_store_array[k])
+                                        updated_store_array.push(store_array[k])
+                                    }
+                                }
+
+                            }
+
                             console.log("Stock of item in store updated: ", stock_store_array[index_of_item_in_store])
                            
     
                         }
-                        console.log("Total Updated Stock Array: ", stock_store_array)
+                        console.log("Total Updated Stock Array: ", updated_stock_store_array)
                         
-                        pool.query("UPDATE stores SET item_stock = $1 WHERE id = $2", [stock_store_array, store], (error, results) => {
+                        pool.query("UPDATE stores SET store_items = $1, item_stock = $2 WHERE id = $3", [updated_store_array, updated_stock_store_array, store], (error, results) => {
                             if (error) {
                                 throw error
                             } else {
@@ -572,6 +590,8 @@ const removeFromCart = (request, response) => {
     })
 
 }
+
+
 
 
 
