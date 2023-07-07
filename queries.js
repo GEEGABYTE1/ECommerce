@@ -1,6 +1,6 @@
 const Pool = require('pg').Pool
 const bcrypt = require('bcrypt')
-
+require('dotenv').config()
 
 
 
@@ -9,10 +9,10 @@ const bcrypt = require('bcrypt')
 
 
 const pool = new Pool({
-    user: 'jaivalpatel', // username
+    user: process.env.USER, // username
     host: 'localhost',
-    database: 'Ecommerce', // database name
-    password: 'password', // pass of user
+    database: process.env.DATABASE, // database name
+    password: process.env.PASSWORD, // pass of user
     port: 5000, // port
   })
 

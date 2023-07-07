@@ -1,0 +1,685 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "EcommerceBackend",
+    "version": "1.0.0",
+    "description": "Basic API for EcommerceBackend"
+  },
+  "components": {
+    "schemas": {
+      "Customer": {
+        "type": "object",
+        "properties": {
+          "customer_email": {
+            "type": "string"
+          },
+          "customer_password": {
+            "type": "string"
+          },
+          "total_purchases": {
+            "type": "array",
+            "items": {}
+          },
+          "purchase_date": {
+            "type": "array",
+            "items": {}
+          },
+          "store_ids": {
+            "type": "array",
+            "items": {}
+          },
+          "customer_cart": {
+            "type": "array",
+            "items": {}
+          },
+          "wallet_amount": {
+            "type": "number"
+          },
+          "quantity": {
+            "type": "array",
+            "items": {}
+          }
+        }
+      },
+      "Items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "store_id": {
+            "type": "integer"
+          },
+          "amount_supplied": {
+            "type": "integer"
+          },
+          "item_name": {
+            "type": "string"
+          }
+        }
+      },
+      "Orders": {
+        "type": "object",
+        "properties": {
+          "customer_id": {
+            "type": "integer"
+          },
+          "items": {
+            "type": "array",
+            "items": {}
+          },
+          "stores": {
+            "type": "array",
+            "items": {}
+          },
+          "datestamp": {
+            "type": "string"
+          },
+          "customer_cost": {
+            "type": "number"
+          },
+          "wallet_amount_after_leftover": {
+            "type": "number"
+          }
+        }
+      },
+      "Stores": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "store_items": {
+            "type": "array",
+            "items": {}
+          },
+          "item_stock": {
+            "type": "array",
+            "items": {}
+          },
+          "item_cost": {
+            "type": "array",
+            "items": {}
+          }
+        }
+      }
+    }
+  },
+  "paths": {
+    "/": {
+      "summary": "Homepage",
+      "description": "Renders the index.ejs",
+      "get": {
+        "summary": "Landing Page",
+        "description": "loads the index.ejs file",
+        "operationId": "LANDING",
+        "responses": {
+          "default": {
+            "description": "Default error sample response"
+          }
+        }
+      }
+    },
+    "/register": {
+      "summary": "Create new user",
+      "description": "Post request to customer's table",
+      "get": {
+        "summary": "Register page",
+        "description": "loads the register page ",
+        "operationId": "REGISTER LANDING",
+        "responses": {
+          "default": {
+            "description": "Default error sample response"
+          }
+        }
+      },
+      "post": {
+        "summary": "Adds new user",
+        "description": "Creates new entry in the customer table",
+        "operationId": "CREATE NEW USER",
+        "responses": {
+          "default": {
+            "description": "Default error sample response"
+          }
+        }
+      }
+    },
+    "/login": {
+      "summary": "Allows user to login",
+      "description": "Post and Get request for customer table.",
+      "get": {
+        "summary": "Login Landing Page",
+        "description": "Brings up the login.ejs page for user login",
+        "operationId": "LOGIN LANDING",
+        "responses": {
+          "default": {
+            "description": "Default error sample response"
+          }
+        }
+      },
+      "post": {
+        "summary": "Auth ",
+        "description": "Used for Passport.js auth",
+        "operationId": "PASSPORT AUTH",
+        "responses": {
+          "default": {
+            "description": "Default error sample response"
+          }
+        }
+      }
+    },
+    "/stores": {
+      "summary": "Fetches the all the stores",
+      "description": "Does not render any .ejs file",
+      "get": {
+        "summary": "Fetches all stores",
+        "description": "get request to query the stores table",
+        "operationId": "GET STORES",
+        "responses": {
+          "default": {
+            "description": "Default error sample response"
+          }
+        }
+      }
+    },
+    "/success": {
+      "summary": "Final endpoint when user signs in",
+      "description": "renders the success.ejs file",
+      "get": {
+        "summary": "Loads the success.ejs",
+        "description": "Passport.js auth success page",
+        "operationId": "",
+        "responses": {
+          "default": {
+            "description": "Default error sample response"
+          }
+        }
+      }
+    },
+    "/search/item/{id}": {
+      "summary": "Search an item by id in the items table",
+      "description": "Queries the items table",
+      "get": {
+        "summary": "Finds an item based on id",
+        "description": "Queries the items table using a Get request",
+        "operationId": "GET ITEM BY ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "ID of item",
+            "required": true,
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "Default error sample response"
+          }
+        }
+      }
+    },
+    "/search/item/name/{name}": {
+      "summary": "Searches an item by name in the items table.",
+      "description": "Queries the items table.",
+      "get": {
+        "summary": "Searches item in items list based on name",
+        "description": "Get request to query the items table based on name",
+        "operationId": "FETCH ITEM BASED ON NAME",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "description": "Name of item",
+            "required": true,
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "Default error sample response"
+          }
+        }
+      }
+    },
+    "/search/store/id/{id}": {
+      "summary": "Searches store by id ",
+      "description": "Queries the stores table",
+      "get": {
+        "summary": "Finds store based on id",
+        "description": "Queries store details in stores table based on id",
+        "operationId": "QUERY STORE BASED ON ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "id of store",
+            "required": true,
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "Default error sample response"
+          }
+        }
+      }
+    },
+    "/getprofile/{email}": {
+      "summary": "Gets a user's profile based on their email",
+      "description": "Queries the customer table",
+      "get": {
+        "summary": "Gets a user's profile",
+        "description": "Queries the customer table",
+        "operationId": "QUERY CUSTOMER",
+        "parameters": [
+          {
+            "name": "email",
+            "in": "path",
+            "description": "Email of user for profile",
+            "schema": {},
+            "required": true
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "Default error sample response"
+          }
+        }
+      }
+    },
+    "/cart/{email}": {
+      "summary": "Returns the cart of a customer based on the email",
+      "description": "Queries the customer table",
+      "get": {
+        "summary": "View Cart",
+        "description": "Queries the customer table and finds the customer's cart based on their email",
+        "operationId": "QUERY CUSTOMER CART",
+        "parameters": [
+          {
+            "name": "email",
+            "in": "path",
+            "description": "email of user to fetch their cart",
+            "required": true,
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "Default error sample response"
+          }
+        }
+      }
+    },
+    "/transactionhistory/{email}": {
+      "summary": "Returns the transaction history by email",
+      "description": "Queries the orders table",
+      "get": {
+        "summary": "View user's transaction history",
+        "description": "Get request to query the orders table",
+        "operationId": "GET TRANSHISTORY",
+        "parameters": [
+          {
+            "name": "email",
+            "in": "path",
+            "description": "Email of user to fetch their transaction history",
+            "required": true,
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "Default error sample response"
+          }
+        }
+      }
+    },
+    "/updateemail/{email}/{newemail}": {
+      "summary": "Updates user email",
+      "description": "Put request for customer's table",
+      "put": {
+        "summary": "Update's user email",
+        "description": "Put request which updates the old user email with new one in customer table",
+        "operationId": "UPDATE EMAIL",
+        "parameters": [
+          {
+            "name": "email",
+            "in": "path",
+            "description": "old email of user",
+            "required": true,
+            "schema": {}
+          },
+          {
+            "name": "newemail",
+            "in": "path",
+            "description": "New email of user",
+            "required": true,
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "Default error sample response"
+          }
+        }
+      }
+    },
+    "/updatepassword/{email}/{oldpassword}/{newpassword}": {
+      "summary": "Updates password based on user",
+      "description": "Put request for customer table",
+      "put": {
+        "summary": "Update user password",
+        "description": "put request to update user password with new password in customer table",
+        "operationId": "UPDATE PASSWORD",
+        "parameters": [
+          {
+            "name": "email",
+            "in": "path",
+            "description": "email of user",
+            "required": true,
+            "schema": {}
+          },
+          {
+            "name": "oldpassword",
+            "in": "path",
+            "description": "old password of user",
+            "required": true,
+            "schema": {}
+          },
+          {
+            "name": "newpassword",
+            "in": "path",
+            "description": "New password of user",
+            "required": true,
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "Default error sample response"
+          }
+        }
+      }
+    },
+    "/{email}/addtocart/{items}/{quantity}/{store}": {
+      "summary": "Adds an item to a user's cart",
+      "description": "Put request to customer, stores, and items table",
+      "put": {
+        "summary": "Add item to cart",
+        "description": "Put request to add item to cart. Items, quantity, are all arrays that get stored in the customer table, which is then used to calculate the total prices in the cart when initiating a transaction.",
+        "operationId": "ADD TO CART",
+        "parameters": [
+          {
+            "name": "email",
+            "in": "path",
+            "description": "Email of user",
+            "required": true,
+            "schema": {}
+          },
+          {
+            "name": "items",
+            "in": "path",
+            "description": "Array of items to add to cart",
+            "required": true,
+            "schema": {}
+          },
+          {
+            "name": "quantity",
+            "in": "path",
+            "description": "Array of quantities to match the item array to represent their relative quantities",
+            "required": true,
+            "schema": {}
+          },
+          {
+            "name": "store",
+            "in": "path",
+            "description": "Array of store ids to reference the store",
+            "required": true,
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "Default error sample response"
+          }
+        }
+      }
+    },
+    "/{email}/removefromcart/{item}/{quantity}/{store}": {
+      "summary": "Removes an item from a user's cart",
+      "description": "Put request for customer, items, and stores table",
+      "put": {
+        "summary": "Remove item from cart",
+        "description": "Queries the cart and quantity array. Finds the index of item in cart, and pops the element at that index in both the cart and quantity array. The updated arrays will then be updated using the put request.",
+        "operationId": "REMOVE ITEM",
+        "parameters": [
+          {
+            "name": "email",
+            "in": "path",
+            "description": "Email of user",
+            "required": true,
+            "schema": {}
+          },
+          {
+            "name": "item",
+            "in": "path",
+            "description": "Name of item",
+            "required": true,
+            "schema": {}
+          },
+          {
+            "name": "quantity",
+            "in": "path",
+            "description": "relative quantity of item to remove",
+            "required": true,
+            "schema": {}
+          },
+          {
+            "name": "store",
+            "in": "path",
+            "description": "Store id to reference store",
+            "required": true,
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "Default error sample response"
+          }
+        }
+      }
+    },
+    "/{email}/checkout": {
+      "summary": "Initiates a transaction for given cart",
+      "description": "Queries the customer cart and deletes the cart after fetching relative rates of objects in the items table.",
+      "put": {
+        "summary": "Cart Checkout",
+        "description": "Using the quantity array and the cart array, in each item in the cart, the price will be found by querying the item stock array of the store for each item id in the store_ids array of the user. If the object index matches in item_stock array of store, the price will be found using the item's index, and will be multiplied by user quantity of item and added to the total cart amount. This process occurs for each item in the user's cart, and then gets deducted from the user wallet. If the transaction goes through, all arrays related to the cart get emptied and the transaction is stored in the history (orders table).",
+        "operationId": "CHECKOUT",
+        "parameters": [
+          {
+            "name": "email",
+            "in": "path",
+            "description": "Email of user",
+            "required": true,
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "Default error sample response"
+          }
+        }
+      }
+    },
+    "/updatestock/{storeid}/{items}/{cost}/{quantity}": {
+      "summary": "Updates stock of items",
+      "description": "Put request for items and stores tables",
+      "put": {
+        "summary": "Adding new items",
+        "description": "Put request to add new items for a given store in the stores table.",
+        "operationId": "ADD NEW STOCK",
+        "parameters": [
+          {
+            "name": "storeid",
+            "in": "path",
+            "description": "Reference the store by its name",
+            "required": true,
+            "schema": {}
+          },
+          {
+            "name": "items",
+            "in": "path",
+            "description": "New array with items to add",
+            "required": true,
+            "schema": {}
+          },
+          {
+            "name": "cost",
+            "in": "path",
+            "description": "New array with the costs of each new item",
+            "required": true,
+            "schema": {}
+          },
+          {
+            "name": "quantity",
+            "in": "path",
+            "description": "Array with relative quantities of new items",
+            "required": true,
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "Default error sample response"
+          }
+        }
+      }
+    },
+    "/updatestock/{storeid}/{item_name}/{quantity}": {
+      "summary": "Updates the stock of item",
+      "description": "Put request for stores and items table",
+      "put": {
+        "summary": "Updates stock of an item in a store",
+        "description": "Put request to change the stock of an item in a store. The resulting change will also change the amount supplied of the item in the items table.",
+        "operationId": "UPDATE STOCK",
+        "parameters": [
+          {
+            "name": "storeid",
+            "in": "path",
+            "description": "Store id to reference store",
+            "required": true,
+            "schema": {}
+          },
+          {
+            "name": "item_name",
+            "in": "path",
+            "description": "Name of item",
+            "required": true,
+            "schema": {}
+          },
+          {
+            "name": "quantity",
+            "in": "path",
+            "description": "New stock to add",
+            "required": true,
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "Default error sample response"
+          }
+        }
+      }
+    },
+    "/updatesupply/{storeid}/{item_name}/{quantity}": {
+      "summary": "Updating total supply of items",
+      "description": "Put request for items table",
+      "put": {
+        "summary": "Change the overall supply of an item",
+        "description": "Changes supply of an item in the items table.",
+        "operationId": "CHANGE SUPPLY",
+        "parameters": [
+          {
+            "name": "storeid",
+            "in": "path",
+            "description": "Store id to reference store",
+            "required": true,
+            "schema": {}
+          },
+          {
+            "name": "item_name",
+            "in": "path",
+            "description": "Item name to update supply of",
+            "required": true,
+            "schema": {}
+          },
+          {
+            "name": "quantity",
+            "description": "Quantity of new item",
+            "in": "path",
+            "required": true,
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "Default error sample response"
+          }
+        }
+      }
+    },
+    "/logout": {
+      "summary": "Allows user to logout",
+      "description": "Get request from passport.js",
+      "get": {
+        "summary": "logout",
+        "description": "Passport.js auth",
+        "operationId": "PASSPORT LOGOUT",
+        "responses": {
+          "default": {
+            "description": "Default error sample response"
+          }
+        }
+      }
+    },
+    "/stores/{store_items}/{item_stock}/{item_cost}": {
+      "summary": "Add new store to stores table",
+      "description": "Post request to stores table",
+      "post": {
+        "summary": "Create new store",
+        "description": "Adds a new store to the stores table",
+        "operationId": "ADD NEW STORE",
+        "parameters": [
+          {
+            "name": "store_items",
+            "description": "Array of items sold by store",
+            "in": "path",
+            "required": true,
+            "schema": {}
+          },
+          {
+            "name": "item_stock",
+            "description": "array of stock for each relative item",
+            "in": "path",
+            "required": true,
+            "schema": {}
+          },
+          {
+            "name": "item_cost",
+            "description": "Array of costs for each relative item",
+            "required": true,
+            "in": "path",
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "Default error sample response"
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,3 +1,4 @@
+require('dotenv').config()
 const express = require('express')
 const db = require('./queries')
 const flash = require('express-flash')
@@ -15,7 +16,7 @@ const bcrypt = require('bcrypt')
 
 const PORT = 3000
 app.use(session({
-    secret: "secret_key",
+    secret: process.env.SECRET_KEY,
     resave: false,
     saveUninitialized: false,
     store
