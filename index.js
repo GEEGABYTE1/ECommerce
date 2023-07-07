@@ -14,7 +14,7 @@ const bcrypt = require('bcrypt')
 
 
 
-const PORT = 3000
+const PORT = 3002
 app.use(session({
     secret: process.env.SECRET_KEY,
     resave: false,
