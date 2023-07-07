@@ -62,7 +62,7 @@ Project Link: [@github_handle](https://github.com/GEEGABYTE1/ECommerce)
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
-[contributors-shield]: https://img.shields.io/github/contributors/othneildrew/Best-README-Template.svg?style=for-the-badge
+[contributors-shield]: https://img.shields.io/github/contributors/GEEGABYTE1/ECommerce.svg?style=for-the-badge
 [contributors-url]: https://github.com/GEEGABYTE1/Ecommerce/graphs/contributors
 [forks-shield]: https://img.shields.io/github/forks/othneildrew/Best-README-Template.svg?style=for-the-badge
 [forks-url]: https://github.com/othneildrew/Best-README-Template/network/members
